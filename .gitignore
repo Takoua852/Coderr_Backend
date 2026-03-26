@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Database
+db.sqlite3
+*.db
+
+# Media & Static
+# We ignore actual uploads in portfolio, but keep the folder structure if needed
+media/profile_pics/*
+media/offers/*
+static/
+
+# Environment variables
+.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
