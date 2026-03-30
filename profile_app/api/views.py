@@ -8,7 +8,7 @@ as well as listing profiles filtered by their account type (Business or Customer
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from profile_app.models import UserProfile
-from .serializers import UserProfileSerializer
+from .serializers import BusinessProfileSerializer, CustomerProfileSerializer, UserProfileSerializer
 from .permissions import IsOwnerOrReadOnly
 
 class UserProfileDetailView(generics.RetrieveUpdateAPIView):
@@ -40,7 +40,7 @@ class BusinessProfileListView(generics.ListAPIView):
     Provides a list of all profiles registered as 'business' accounts.
     Used for the provider directory or search results.
     """
-    serializer_class = UserProfileSerializer
+    serializer_class = BusinessProfileSerializer
     pagination_class = None
     permission_classes = [IsAuthenticated]
 
@@ -54,7 +54,7 @@ class CustomerProfileListView(generics.ListAPIView):
     Provides a list of all profiles registered as 'customer' accounts.
     Typically utilized for administrative overviews.
     """
-    serializer_class = UserProfileSerializer
+    serializer_class = CustomerProfileSerializer
     pagination_class = None 
     permission_classes = [IsAuthenticated]
 

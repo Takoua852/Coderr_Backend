@@ -22,11 +22,23 @@ class OfferDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'url']
 
     def get_url(self, obj):
-        """Generates the absolute URL for the specific offer detail endpoint."""
+        """
+        Dynamically generates either an absolute or relative URL for offer details
+        based on the current view context to match specific API requirements.
+        """
         request = self.context.get('request')
+        view = self.context.get('view')
+
+        # Define the base path for the specific offer detail tier
         path = f"/api/offerdetails/{obj.id}/"
-        if request:
+
+        # If the serializer is called from the DetailView, provide a full absolute URI
+        # Example result: http://127.0.0.1:8000/api/offerdetails/1/
+        if view and view.__class__.__name__ == 'OfferDetailView' and request:
             return request.build_absolute_uri(path)
+
+        # Otherwise, return a relative path for list views as per documentation requirements
+        # Example result: /api/offerdetails/1/
         return path
 
 
@@ -38,22 +50,24 @@ class OfferDetailCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = OfferDetail
         fields = [
-            'id', 'title', 'revisions', 'delivery_time_in_days', 
+            'id', 'title', 'revisions', 'delivery_time_in_days',
             'price', 'features', 'offer_type'
         ]
 
     def to_representation(self, instance):
-        """
-        Ensures numeric fields are never returned as null to prevent 
-        parsing errors in the frontend.
-        """
         data = super().to_representation(instance)
-        if data.get('revisions') is None:
-            data['revisions'] = 0
-        if data.get('delivery_time_in_days') is None:
-            data['delivery_time_in_days'] = 0
-        if data.get('price') is None:
+
+        # Convert price to integer to remove decimal points
+        if data.get('price') is not None:
+            data['price'] = int(float(data['price']))
+        else:
             data['price'] = 0
+
+        # Optional: Ensure other numeric fields are integers
+        data['revisions'] = int(data.get('revisions', 0))
+        data['delivery_time_in_days'] = int(
+            data.get('delivery_time_in_days', 0))
+
         return data
 
 
@@ -62,12 +76,14 @@ class OfferSerializer(serializers.ModelSerializer):
     Primary Read-Only serializer for Offer objects.
     Provides aggregated data like min_price and nested user details.
     """
-    min_price = serializers.FloatField(read_only=True)
+    min_price = serializers.IntegerField(read_only=True)
     min_delivery_time = serializers.IntegerField(read_only=True)
     user_details = serializers.SerializerMethodField()
     details = OfferDetailSerializer(many=True, read_only=True)
-    created_at = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ", read_only=True)
-    updated_at = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%SZ", read_only=True)
+    created_at = serializers.DateTimeField(
+        format="%Y-%m-%dT%H:%M:%SZ", read_only=True)
+    updated_at = serializers.DateTimeField(
+        format="%Y-%m-%dT%H:%M:%SZ", read_only=True)
     image = serializers.SerializerMethodField()
 
     class Meta:
@@ -91,6 +107,24 @@ class OfferSerializer(serializers.ModelSerializer):
         if obj.image:
             return self.context['request'].build_absolute_uri(obj.image.url)
         return ""
+
+    def to_representation(self, instance):
+        """
+        Custom logic to match the specific response requirements:
+        1. Includes 'user_details' in the List View.
+        2. Removes 'user_details' in the Detail View.
+        """
+        representation = super().to_representation(instance)
+
+        # We check the view name to decide if we strip the user_details
+        view = self.context.get('view')
+
+        # If the view is the DetailView (Retrieve), remove user_details
+        # Adjusted to common naming conventions
+        if view and view.__class__.__name__ == 'OfferDetailView':
+            representation.pop('user_details', None)
+
+        return representation
 
 
 class OfferCreateSerializer(serializers.ModelSerializer):

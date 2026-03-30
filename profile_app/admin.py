@@ -4,7 +4,7 @@ from .models import UserProfile
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'type', 'location', 'avatar_tag')
+    list_display = ('id','user', 'type', 'location', 'avatar_tag')
     list_filter = ('type',)
     search_fields = ('user__username', 'location', 'tel')
 

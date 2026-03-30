@@ -1,4 +1,5 @@
-from .utils import validate_int_param
+from offers_app.api.filters import OfferFilter
+from rest_framework.exceptions import PermissionDenied
 from rest_framework import generics, filters
 from django.db.models import Min
 from django_filters.rest_framework import DjangoFilterBackend
@@ -19,6 +20,7 @@ class OfferListCreateView(generics.ListCreateAPIView):
                        filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'description']
     ordering_fields = ['updated_at', 'min_price']
+    filterset_class = OfferFilter
 
     def get_serializer_class(self):
         """
@@ -34,26 +36,10 @@ class OfferListCreateView(generics.ListCreateAPIView):
         Retrieves offers with annotated minimum price and delivery time 
         calculated from the related OfferDetail tiers.
         """
-        queryset = Offer.objects.annotate(
+        return  Offer.objects.annotate(
             min_price=Min('details__price'),
             min_delivery_time=Min('details__delivery_time_in_days')
         ).order_by('-updated_at')
-
-        # Custom filtering based on query parameters
-        creator_id = validate_int_param(self.request, "creator_id")
-        min_price = validate_int_param(self.request, "min_price")
-        max_delivery_time = validate_int_param(
-            self.request, "max_delivery_time")
-
-        if creator_id:
-            queryset = queryset.filter(user_id=creator_id)
-        if min_price:
-            queryset = queryset.filter(min_price__gte=min_price)
-        if max_delivery_time:
-            queryset = queryset.filter(
-                min_delivery_time__lte=max_delivery_time)
-
-        return queryset
 
     def perform_create(self, serializer):
         """
@@ -61,7 +47,6 @@ class OfferListCreateView(generics.ListCreateAPIView):
         Assigns the current authenticated user as the offer creator.
         """
         if self.request.user.profile.type != 'business':
-            from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied(
                 "Nur Business-Profile dürfen Angebote erstellen.")
 

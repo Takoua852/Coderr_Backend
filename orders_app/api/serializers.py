@@ -16,7 +16,7 @@ class OrderSerializer(serializers.ModelSerializer):
     The 'status' field is the primary editable field for business workflow 
     management, while all price and service details are locked.
     """
-    price = serializers.FloatField()
+    price = serializers.IntegerField()
     
     class Meta:
         model = Order
@@ -27,13 +27,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         
-        # Ensures that order details (the 'contract') cannot be 
-        # tampered with after creation via the API.
-        read_only_fields = [
-            'customer_user', 'business_user', 'title', 
-            'revisions', 'delivery_time_in_days', 'price', 
-            'features', 'offer_type', 'created_at', 'updated_at'
-        ]
+        
 
     def validate_status(self, value):
         """

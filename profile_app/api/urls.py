@@ -21,5 +21,5 @@ urlpatterns = [
     path('profiles/business/', BusinessProfileListView.as_view(), name='business-profiles'),
 
     # GET: List all profiles with the 'customer' type
-    path('profiles/customer/', BusinessProfileListView.as_view(), name='customer-profiles'),
+    path('profiles/customer/', CustomerProfileListView.as_view(), name='customer-profiles'),
 ]
