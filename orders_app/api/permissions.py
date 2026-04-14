@@ -19,7 +19,7 @@ class IsCustomerUser(permissions.BasePermission):
         """
         Verifies that the user is authenticated and is registered as a customer.
         """
-        return bool(
+        return (
             request.user and 
             request.user.is_authenticated and 
             hasattr(request.user, 'profile') and
@@ -33,16 +33,15 @@ class IsBusinessOwner(permissions.BasePermission):
     'business_user' for a specific order and holds a 'business' profile.
     """
    
-    def has_object_permission(self, request, view, obj):
-        """
-        Checks if the user is the owner of the service being sold in the order.
-        """
-        return bool(
-            request.user and 
-            request.user.is_authenticated and 
-            obj.business_user == request.user and 
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            hasattr(request.user, 'profile') and
             request.user.profile.type == 'business'
         )
+
+    def has_object_permission(self, request, view, obj):
+        return True
 
 class IsAdminUser(permissions.BasePermission):
     """
@@ -55,4 +54,4 @@ class IsAdminUser(permissions.BasePermission):
         """
         Strict check for Django staff status.
         """
-        return bool(request.user and request.user.is_staff)
+        return request.user and request.user.is_staff

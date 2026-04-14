@@ -15,7 +15,7 @@ from .serializers import OrderSerializer
 from .permissions import IsCustomerUser, IsBusinessOwner, IsAdminUser
 from offers_app.models import OfferDetail
 from django.contrib.auth.models import User
-from profile_app.models import UserProfile
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     """
@@ -37,12 +37,19 @@ class OrderViewSet(viewsets.ModelViewSet):
         """
         if self.action == 'create':
             return [IsCustomerUser()]
-        # if self.action in ['partial_update', 'update']:
-        #     return [IsBusinessOwner()]
-       
+        if self.action in ['partial_update', 'update']:
+            return [IsBusinessOwner()]
         if self.action == 'destroy':
             return [IsAdminUser()]
         return [IsAuthenticated()]
+    
+    def get_queryset(self):
+        """
+        Custom queryset to ensure users only see orders where they are either the customer or the business user.
+        This prevents unauthorized access to orders that do not belong to the user.
+        """
+        user = self.request.user
+        return Order.objects.filter(Q(customer_user=user) | Q(business_user=user)).order_by('-created_at')
 
     def create(self, request):
         """
@@ -52,7 +59,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         offer_detail_id = request.data.get('offer_detail_id')
         offer_detail = get_object_or_404(OfferDetail, pk=offer_detail_id)
 
-        # Mapping offer detail attributes to a permanent order record
         order = Order.objects.create(
             customer_user=request.user,
             business_user=offer_detail.offer.user,
@@ -71,25 +77,15 @@ class OrderViewSet(viewsets.ModelViewSet):
         PATCH /api/orders/{id}/
         Requirement: Only users of type 'business' can update the status.
         """
-        # 1. Look up in ALL orders (ignores the get_queryset filter) to avoid 404 for unauthorized users.
-        instance = get_object_or_404(
-            Order, pk=kwargs.get('pk') or kwargs.get('id'))
-        # 2. Permission Check (403)
-        # Jetzt prüfen wir nur noch den Typ, wie von dir gewünscht.
-        if request.user.profile.type != 'business':
-            return Response(
-                {"detail": "Only business profiles can update order statuses."},
-                status=status.HTTP_403_FORBIDDEN
-            )
 
-        # 3. Field Validation (400)
+        instance = self.get_object()
+    
         if set(request.data.keys()) != {'status'}:
             return Response(
                 {"detail": "Only the 'status' field can be updated."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 4. Update ausführen (200)
         serializer = self.get_serializer(
             instance, data=request.data, partial=True)
         if serializer.is_valid():
@@ -123,8 +119,7 @@ class CompletedOrderCountView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, business_user_id):
-        # 1. VALIDATION (404): Check if the user exists and is a business profile
-        # This triggers the 404 error if the ID is wrong or not a business user.
+       
         business_user = get_object_or_404(User, id=business_user_id)
         if not hasattr(business_user, 'profile') or business_user.profile.type != 'business':
             return Response(
@@ -132,7 +127,6 @@ class CompletedOrderCountView(generics.GenericAPIView):
             status=status.HTTP_404_NOT_FOUND
         )
 
-        # 2. LOGIC (200): Count the orders for this specific validated user
         completed_order_count = Order.objects.filter(
             business_user=business_user, status='completed').count()
 
