@@ -154,7 +154,8 @@ project/
  ├── reviews_app/
  ├── profile_app/
  ├── manage.py
- └── README.md
+ ├── README.md
+ └── requirements.txt
 ```
 
 ---
@@ -168,7 +169,7 @@ This project is part of a full-stack application and is actively in development.
 ## 👨‍💻 Author
 
 Your Name
-GitHub: https://github.com/your-username
+GitHub: https://github.com/Takoua852/
 
 ---
 

@@ -39,7 +39,7 @@ class BaseInfoView(APIView):
                 "offer_count": offer_count
             }, status=status.HTTP_200_OK)
 
-        except Exception as e:
+        except Exception:
             # Fallback error message in English for professional consistency
             return Response(
                 {"detail": "Internal server error during statistics calculation."},
