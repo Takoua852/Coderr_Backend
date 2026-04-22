@@ -18,6 +18,7 @@ db.sqlite3
 media/profile_pics/*
 media/offers/*
 static/
+staticfiles/
 offers/
 profile_pics/
 # Environment variables
