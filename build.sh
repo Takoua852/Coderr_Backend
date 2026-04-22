@@ -19,4 +19,11 @@ if not User.objects.filter(username=username).exists():
     print("Superuser created")
 else:
     print("Superuser already exists")
+
+if not User.objects.filter(username="andrey").exists():
+    User.objects.create_user(username="andrey", password="asdasd")
+    print("Guest 'andrey' created")
+if not User.objects.filter(username="kevin").exists():
+    User.objects.create_user(username="kevin", password="asdasd24")
+    print("Guest 'kevin' created")
 EOF
